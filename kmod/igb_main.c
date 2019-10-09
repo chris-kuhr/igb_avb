@@ -10935,7 +10935,9 @@ static void igb_vm_open(struct vm_area_struct *vma)
 static void igb_vm_close(struct vm_area_struct *vma)
 {
 }
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
+static unsigned int igb_vm_fault(struct vm_fault *fdata)
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
 static int igb_vm_fault(struct vm_fault *fdata)
 #else
 static int igb_vm_fault(struct vm_area_struct *area, struct vm_fault *fdata)
