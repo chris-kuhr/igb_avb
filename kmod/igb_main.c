@@ -133,6 +133,17 @@ static void igb_dma_err_timer(unsigned long data);
 #endif
 static void igb_watchdog_task(struct work_struct *);
 static void igb_dma_err_task(struct work_struct *);
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
+/* AVB specific */
+#ifdef HAVE_NDO_SELECT_QUEUE_ACCEL_FALLBACK
+static u16 igb_select_queue(struct net_device *dev, struct sk_buff *skb,
+                            select_queue_fallback_t fallback);
+#else
+static u16 igb_select_queue(struct net_device *dev, struct sk_buff *skb);
+#endif
+
+#else
 /* AVB specific */
 #ifdef HAVE_NDO_SELECT_QUEUE_ACCEL_FALLBACK
 static u16 igb_select_queue(struct net_device *dev, struct sk_buff *skb,
@@ -140,6 +151,7 @@ static u16 igb_select_queue(struct net_device *dev, struct sk_buff *skb,
 #else
 static u16 igb_select_queue(struct net_device *dev, struct sk_buff *skb);
 #endif
+#endif // LINUX_VERSION_CODE
 
 static netdev_tx_t igb_xmit_frame(struct sk_buff *skb, struct net_device *);
 static struct net_device_stats *igb_get_stats(struct net_device *);
@@ -221,7 +233,9 @@ static long igb_ioctl_file(struct file *file, unsigned int cmd,
 			   unsigned long arg);
 static void igb_vm_open(struct vm_area_struct *vma);
 static void igb_vm_close(struct vm_area_struct *vma);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
+static unsigned int igb_vm_fault(struct vm_fault *fdata);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
 static int igb_vm_fault(struct vm_fault *fdata);
 #else
 static int igb_vm_fault(struct vm_area_struct *area, struct vm_fault *fdata);
@@ -1878,15 +1892,15 @@ void igb_down(struct igb_adapter *adapter)
 	struct e1000_hw *hw = &adapter->hw;
 	u32 tctl, rctl;
 	int i;
-   
-    	/* deleting timer and work queue sync 
+
+    	/* deleting timer and work queue sync
        	of igb_watchdog task at the begining
        	to avoid race condition between igb_down
        	and watchdog - performing required actions
        	before altering the adapter state and registers
      	*/
     	del_timer_sync(&adapter->watchdog_timer);
-    	cancel_work_sync(&adapter->watchdog_task);    
+    	cancel_work_sync(&adapter->watchdog_task);
 
 	/* signal that we're down so the interrupt handler does not
 	 * reschedule our watchdog timer
@@ -1915,7 +1929,7 @@ void igb_down(struct igb_adapter *adapter)
 	igb_irq_disable(adapter);
 
 	adapter->flags &= ~IGB_FLAG_NEED_LINK_UPDATE;
-	
+
 	if (adapter->flags & IGB_FLAG_DETECT_BAD_DMA)
 		del_timer_sync(&adapter->dma_err_timer);
 	del_timer_sync(&adapter->phy_info_timer);
@@ -2172,6 +2186,10 @@ static int igb_set_features(struct net_device *netdev,
 	return 0;
 }
 
+
+
+
+
 #ifdef HAVE_FDB_OPS
 #ifdef USE_CONST_DEV_UC_CHAR
 static int igb_ndo_fdb_add(struct ndmsg *ndm, struct nlattr *tb[],
@@ -2180,7 +2198,11 @@ static int igb_ndo_fdb_add(struct ndmsg *ndm, struct nlattr *tb[],
 #ifdef HAVE_NDO_FDB_ADD_VID
 			   u16 vid,
 #endif
-			   u16 flags)
+			   u16 flags
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
+                , struct netlink_ext_ack *extAck
+#endif
+			   )
 #else /* USE_CONST_DEV_UC_CHAR */
 static int igb_ndo_fdb_add(struct ndmsg *ndm,
 			   struct net_device *dev,
@@ -2275,7 +2297,11 @@ static int igb_ndo_fdb_dump(struct sk_buff *skb,
 #ifdef HAVE_NDO_BRIDGE_SET_DEL_LINK_FLAGS
 static int igb_ndo_bridge_setlink(struct net_device *dev,
 				  struct nlmsghdr *nlh,
-				  u16 flags)
+				  u16 flags
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
+                , struct netlink_ext_ack *extAck
+#endif
+                )
 #else
 static int igb_ndo_bridge_setlink(struct net_device *dev,
 				  struct nlmsghdr *nlh)
@@ -2358,6 +2384,16 @@ static int igb_ndo_bridge_getlink(struct sk_buff *skb, u32 pid, u32 seq,
 }
 #endif /* HAVE_BRIDGE_ATTRIBS */
 #endif /* HAVE_FDB_OPS */
+
+
+
+
+
+
+
+
+
+
 
 #endif /* HAVE_NDO_SET_FEATURES */
 #ifdef HAVE_NET_DEVICE_OPS
@@ -5795,12 +5831,21 @@ static inline struct igb_ring *igb_tx_queue_mapping(struct igb_adapter *adapter,
 #error Must have multi-queue tx support enabled (CONFIG_NETDEVICES_MULTIQUEUE)!
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
+#ifdef HAVE_NDO_SELECT_QUEUE_ACCEL_FALLBACK
+static u16 igb_select_queue(struct net_device *dev, struct sk_buff *skb,
+			    select_queue_fallback_t fallback)
+#else
+static u16 igb_select_queue(struct net_device *dev, struct sk_buff *skb)
+#endif
+#else
 #ifdef HAVE_NDO_SELECT_QUEUE_ACCEL_FALLBACK
 static u16 igb_select_queue(struct net_device *dev, struct sk_buff *skb,
 			    void *accel_priv, select_queue_fallback_t fallback)
 #else
 static u16 igb_select_queue(struct net_device *dev, struct sk_buff *skb)
 #endif
+#endif // LINUX_VERSION_CODE
 {
 	/* remap normal LAN to best effort queue[3] */
 	return 3;
@@ -10309,7 +10354,7 @@ static int igb_bind(struct file *file, void __user *argp)
 
 	if (copy_from_user(&req, argp, sizeof(req)))
 		return -EFAULT;
-	
+
 	/*
 	 * Set the last character of req.iface to '/0' to
 	 * guarantee null termination of req.iface string
@@ -10408,7 +10453,7 @@ static long igb_mapbuf_user(struct file *file, void __user *arg, int ring)
 	struct igb_adapter *adapter;
 	struct igb_buf_cmd req;
 	/*size used for the purpose of copying the contents of igb_buf_cmd
- 	  between userspace and kernel space	
+ 	  between userspace and kernel space
 	  introduced to handle possible mismatch in libigb and igb version*/
 	int buf_cmd_size = 0;
 	int err = 0;
@@ -10439,7 +10484,7 @@ static long igb_mapbuf_user(struct file *file, void __user *arg, int ring)
 		/* assuming no compatibility issue:
   		   libigb and kernel module have the same
 	  	   igb_buf_cmd structs ("pa" field included in both)
- 		*/ 	
+ 		*/
 		buf_cmd_size = sizeof(req);
 	}
 
@@ -10527,7 +10572,7 @@ static long igb_mapbuf(struct file *file, void __user *arg, int ring)
 	struct igb_adapter *adapter;
 	struct igb_buf_cmd req;
 	/*size used for the purpose of copying the contents of igb_buf_cmd
- 	  between userspace and kernel space	
+ 	  between userspace and kernel space
 	  introduced to handle possible mismatch in libigb and igb version*/
 	int buf_cmd_size = 0;
 
@@ -10536,7 +10581,7 @@ static long igb_mapbuf(struct file *file, void __user *arg, int ring)
 	if (igb_priv == NULL) {
 		printk("cannot find private data!\n");
 		return -ENOENT;
-	}	
+	}
 
 	adapter = igb_priv->adapter;
 	if (adapter == NULL) {
@@ -10550,21 +10595,21 @@ static long igb_mapbuf(struct file *file, void __user *arg, int ring)
 		/* this situation suggest using an old ioctl by libigb
  		   as a consequence the igb_buf_cmd struct from libigb perspective does not contain the "pa" field
 		   we need to align the requested size in copy_from_user() for possibility */
-		buf_cmd_size = sizeof(req) - sizeof(u64);	
-	
+		buf_cmd_size = sizeof(req) - sizeof(u64);
+
 	} else {
 
 		/* assuming no compatibility issue:
   		   libigb and kernel module have the same
 		   igb_buf_cmd structs ("pa" field included in both)
- 		*/ 
+ 		*/
 		buf_cmd_size = sizeof(req);
 
-	}	
+	}
 
 	if (copy_from_user(&req, arg, buf_cmd_size))
 		return -EFAULT;
-	
+
 	if ((ring == IGB_MAPRING) || (ring == IGB_MAP_TX_RING) ||
 	     ring == IGB_IOCTL_MAP_TX_RING) {
 		if (req.queue >= 3) {
@@ -10572,7 +10617,7 @@ static long igb_mapbuf(struct file *file, void __user *arg, int ring)
 			       req.queue);
 			return -EINVAL;
 		}
-		
+
 		if(!adapter->num_tx_queues) {
 			printk("igb_avb igb_mapbuf:tx ring freed %s\n", adapter->netdev->name);
 			return -EINVAL;
@@ -10594,7 +10639,7 @@ static long igb_mapbuf(struct file *file, void __user *arg, int ring)
 		adapter->uring_tx_init |= (1 << req.queue);
 		igb_priv->uring_tx_init |= (1 << req.queue);
 
-		if(ring == IGB_IOCTL_MAP_TX_RING)	
+		if(ring == IGB_IOCTL_MAP_TX_RING)
 			req.pa = virt_to_phys(adapter->tx_ring[req.queue]->desc);
 
 		req.physaddr = adapter->tx_ring[req.queue]->dma;
@@ -10627,8 +10672,8 @@ static long igb_mapbuf(struct file *file, void __user *arg, int ring)
 
 		adapter->uring_rx_init |= (1 << req.queue);
 		igb_priv->uring_rx_init |= (1 << req.queue);
-		
-		if(ring == IGB_IOCTL_MAP_RX_RING)	
+
+		if(ring == IGB_IOCTL_MAP_RX_RING)
 			req.pa = virt_to_phys(adapter->rx_ring[req.queue]->desc);
 
 		req.physaddr = adapter->rx_ring[req.queue]->dma;
@@ -10678,7 +10723,7 @@ static long igb_unmapbuf(struct file *file, void __user *arg, int ring)
 		buf_cmd_size = sizeof(req) - sizeof(u64);
 
 	} else {
-		
+
 		buf_cmd_size = sizeof(req);
 	}
 
@@ -10763,7 +10808,7 @@ static long igb_unmapbuf(struct file *file, void __user *arg, int ring)
 	return err;
 }
 
-static long igb_ioctl_file(struct file *file, unsigned int cmd, 
+static long igb_ioctl_file(struct file *file, unsigned int cmd,
 			   unsigned long arg)
 {
 	void __user *argp = (void __user *) arg;
@@ -10840,7 +10885,7 @@ static int igb_close_file(struct inode *inode, struct file *file)
 	if (adapter == NULL)
 		goto out;
 
-	mutex_lock(&adapter->lock);	
+	mutex_lock(&adapter->lock);
 
 	adapter->uring_tx_init &= ~igb_priv->uring_tx_init;
 	adapter->uring_rx_init &= ~igb_priv->uring_rx_init;
