@@ -1772,6 +1772,10 @@ static void igb_diag_test(struct net_device *netdev,
 	u8 forced_speed_duplex, autoneg;
 	bool if_running = netif_running(netdev);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
+	struct netlink_ext_ack *extAck;
+#endif // LINUX_VERSION_CODE
+
 	set_bit(__IGB_TESTING, &adapter->state);
 	if (eth_test->flags == ETH_TEST_FL_OFFLINE) {
 		/* Offline tests */
@@ -1828,7 +1832,11 @@ static void igb_diag_test(struct net_device *netdev,
 
 		clear_bit(__IGB_TESTING, &adapter->state);
 		if (if_running)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
+			dev_open(netdev, extAck);
+#else
 			dev_open(netdev);
+#endif
 	} else {
 		dev_info(pci_dev_to_dev(adapter->pdev), "online testing starting\n");
 
