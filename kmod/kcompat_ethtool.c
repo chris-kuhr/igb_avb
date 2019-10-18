@@ -775,7 +775,6 @@ out:
 
 /* The main entry point in this file.  Called from net/core/dev.c */
 
-#define ETHTOOL_OPS_COMPAT
 int ethtool_ioctl(struct ifreq *ifr)
 {
 	struct net_device *dev = __dev_get_by_name(ifr->ifr_name);

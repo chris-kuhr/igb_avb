@@ -4704,4 +4704,9 @@ static inline bool page_is_pfmemalloc(struct page __maybe_unused *page)
 #define HAVE_GENEVE_RX_OFFLOAD
 #endif /* 4.5.0 */
 
+
+
+#define ETHTOOL_OPS_COMPAT
+
+
 #endif /* _KCOMPAT_H_ */
