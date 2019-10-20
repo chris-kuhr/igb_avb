@@ -203,7 +203,7 @@ KVER_CODE := $(shell $(CC) $(EXTRA_CFLAGS) -E -dM $(VSP) 2>/dev/null |\
 	grep -m 1 LINUX_VERSION_CODE | awk '{ print $$3 }' | sed 's/\"//g')
 
 # abort the build on kernels older than 2.4.21
-$(shell [ echo hello ])
+echo hello
 
 
 # abort the build on kernels older than 2.4.21
