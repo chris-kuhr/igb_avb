@@ -190,7 +190,7 @@ endif
 KVER := $(shell $(CC) $(EXTRA_CFLAGS) -E -dM $(VERSION_FILE) | grep UTS_RELEASE | \
         awk '{ print $$3 }' | sed 's/\"//g')
 
-echo $KVER
+
 
 # assume source symlink is the same as build, otherwise adjust KOBJ
 ifneq (,$(wildcard /lib/modules/$(KVER)/build))
