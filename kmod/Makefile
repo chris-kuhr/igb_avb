@@ -36,9 +36,9 @@ HFILES = igb.h e1000_hw.h e1000_osdep.h e1000_defines.h e1000_mac.h \
 	 e1000_api.h igb_regtest.h e1000_mbx.h igb_vmdq.h
 ifeq (,$(BUILD_KERNEL))
 BUILD_KERNEL=$(shell uname -r)
+echo $(BUILD_KERNEL)
 endif
 
-echo $(BUILD_KERNEL)
 
 # PTP is required for AVB support
 CFLAGS_EXTRA += -DIGB_PTP
