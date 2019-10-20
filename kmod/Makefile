@@ -36,7 +36,6 @@ HFILES = igb.h e1000_hw.h e1000_osdep.h e1000_defines.h e1000_mac.h \
 	 e1000_api.h igb_regtest.h e1000_mbx.h igb_vmdq.h
 ifeq (,$(BUILD_KERNEL))
 BUILD_KERNEL=$(shell uname -r)
-echo $(BUILD_KERNEL)
 endif
 
 
@@ -191,7 +190,7 @@ endif
 KVER := $(shell $(CC) $(EXTRA_CFLAGS) -E -dM $(VERSION_FILE) | grep UTS_RELEASE | \
         awk '{ print $$3 }' | sed 's/\"//g')
 
-#echo $KVER
+echo $KVER
 
 # assume source symlink is the same as build, otherwise adjust KOBJ
 ifneq (,$(wildcard /lib/modules/$(KVER)/build))
@@ -203,7 +202,7 @@ endif
 KVER_CODE := $(shell $(CC) $(EXTRA_CFLAGS) -E -dM $(VSP) 2>/dev/null |\
 	grep -m 1 LINUX_VERSION_CODE | awk '{ print $$3 }' | sed 's/\"//g')
 
-#echo $KVER_CODE
+echo $KVER_CODE
 
 # abort the build on kernels older than 2.4.21
 ifneq (1,$(shell [ $(KVER_CODE) -ge 132117 ] && echo 1 || echo 0))
