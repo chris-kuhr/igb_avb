@@ -202,9 +202,6 @@ endif
 KVER_CODE := $(shell $(CC) $(EXTRA_CFLAGS) -E -dM $(VSP) 2>/dev/null |\
 	grep -m 1 LINUX_VERSION_CODE | awk '{ print $$3 }' | sed 's/\"//g')
 
-# abort the build on kernels older than 2.4.21
-echo hello
-
 
 # abort the build on kernels older than 2.4.21
 ifneq (1,$(shell [ $(KVER_CODE) -ge 132117 ] && echo 1 || echo 0))
