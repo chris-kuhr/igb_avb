@@ -803,6 +803,7 @@ struct _kc_ethtool_pauseparam {
 #elif ((LINUX_VERSION_CODE == KERNEL_VERSION(3,12,28)))
 /* SLES12 GA is 3.12.28 based */
 #define SLE_VERSION_CODE SLE_VERSION(12,0,0)
+#elif ((LINUX_VERSION_CODE == KERNEL_VERSION(5,2,17)))
 /* new SLES kernels must be added here with >= based on kernel
  * the idea is to order from newest to oldest and just catch all
  * of them using the >=
@@ -810,6 +811,7 @@ struct _kc_ethtool_pauseparam {
 #elif ((LINUX_VERSION_CODE >= KERNEL_VERSION(3,12,47)))
 /* SLES12 SP1 is 3.12.47-based */
 #define SLE_VERSION_CODE SLE_VERSION(12,1,0)
+#elif ((LINUX_VERSION_CODE == KERNEL_VERSION(5,2,17)))
 #endif /* LINUX_VERSION_CODE == KERNEL_VERSION(x,y,z) */
 #endif /* CONFIG_SUSE_KERNEL */
 #ifndef SLE_VERSION_CODE
