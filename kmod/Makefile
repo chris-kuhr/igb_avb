@@ -191,7 +191,7 @@ endif
 KVER := $(shell $(CC) $(EXTRA_CFLAGS) -E -dM $(VERSION_FILE) | grep UTS_RELEASE | \
         awk '{ print $$3 }' | sed 's/\"//g')
 
-echo $KVER
+#echo $KVER
 
 # assume source symlink is the same as build, otherwise adjust KOBJ
 ifneq (,$(wildcard /lib/modules/$(KVER)/build))
@@ -203,7 +203,7 @@ endif
 KVER_CODE := $(shell $(CC) $(EXTRA_CFLAGS) -E -dM $(VSP) 2>/dev/null |\
 	grep -m 1 LINUX_VERSION_CODE | awk '{ print $$3 }' | sed 's/\"//g')
 
-echo $KVER_CODE
+#echo $KVER_CODE
 
 # abort the build on kernels older than 2.4.21
 ifneq (1,$(shell [ $(KVER_CODE) -ge 132117 ] && echo 1 || echo 0))
