@@ -51,7 +51,8 @@
 #include <linux/mii.h>
 #include <linux/vmalloc.h>
 #include <asm/io.h>
-#include <linux/ethtool.h>
+//#include <linux/ethtool.h>
+#include "/home/soundjack/rt-kernel/linux-5.2.17/include/linux/ethtool.h"
 #include <linux/if_vlan.h>
 
 /* UTS_RELEASE is in a different header starting in kernel 2.6.18 */

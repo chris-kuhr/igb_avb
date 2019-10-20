@@ -45,7 +45,7 @@ static int tx_size_ethtool = 256; /*default value*/
 module_param(tx_size_ethtool, int, 0);
 MODULE_PARM_DESC(tx_size_ethtool, "Tx ring size passed in insmod parameter");
 
-#define ETHTOOL_OPS_COMPAT
+
 #ifdef ETHTOOL_OPS_COMPAT
 #include "kcompat_ethtool.c"
 #endif

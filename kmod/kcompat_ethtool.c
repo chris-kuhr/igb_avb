@@ -47,7 +47,8 @@
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/mii.h>
-#include <linux/ethtool.h>
+//#include <linux/ethtool.h>
+#include "/home/soundjack/rt-kernel/linux-5.2.17/include/linux/ethtool.h"
 #include <linux/netdevice.h>
 #include <asm/uaccess.h>
 
