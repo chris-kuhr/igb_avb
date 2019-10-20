@@ -38,7 +38,7 @@ ifeq (,$(BUILD_KERNEL))
 BUILD_KERNEL=$(shell uname -r)
 endif
 
-echo $BUILD_KERNEL
+echo $(BUILD_KERNEL)
 
 # PTP is required for AVB support
 CFLAGS_EXTRA += -DIGB_PTP
